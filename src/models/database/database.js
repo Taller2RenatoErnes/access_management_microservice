@@ -1,22 +1,20 @@
 const sql = require("mssql");
 
-// Configuración de conexión a SQL Server
 const dbConfig = {
-  user: "sa", // Reemplaza con tu usuario
-  password: "123456", // Reemplaza con tu contraseña
-  server: "localhost", // Cambia si tu servidor no es local
-  database: "TestDB",
-  options: {
-    encrypt: false, // Cambiar a true si usas Azure
-    trustServerCertificate: true, // Necesario para conexiones locales
-  },
-  
-};
+    user: process.env.DB_USER, 
+    password: process.env.DB_PASSWORD, 
+    server: process.env.DB_SERVER, 
+    database: process.env.DB_DATABASE, 
+    options: {
+      encrypt: process.env.DB_ENCRYPT === 'true', 
+      trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true', 
+    },
+  };
 
 
 try {
-sql.connect(dbConfig);
-    console.log("Conexión exitosa a la base de datos");
+    sql.connect(dbConfig);
+        console.log("Conexión exitosa a la base de datos");
 } catch (err) {
     console.error("Error al conectar a la base de datos:", err);
 }
