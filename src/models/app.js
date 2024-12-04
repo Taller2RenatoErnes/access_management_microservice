@@ -4,7 +4,9 @@ const morgan = require("morgan");
 const app = express();
 
 
-const accessRoutes = require ("./routes/accessRoutes");
+const accessRoutes = require ("../routes/accessRoutes");
+
+
 
 app.use(express.json());
 

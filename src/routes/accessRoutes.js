@@ -1,8 +1,9 @@
 const { Router } = require("express");
+const {sql} = require("../models/database/database");
 const router = Router();
 
 router.get('/', async (req, res) => {
-    return res.status(200).json({
-        msg: "Hello World"});
+    const result = await sql.query("SELECT * FROM ExampleTable");
+    res.json(result.recordset); 
   });
 module.exports = router;
