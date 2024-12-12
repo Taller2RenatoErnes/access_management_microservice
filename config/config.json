@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "sa",
+    "password": "Pass123456",
+    "database": "master",
+    "host": "localhost",
+    "dialect": "mssql"
+  },
+  "test": {
+    "username": "sa",
+    "password": "Pass123456",
+    "database": "master",
+    "host": "localhost",
+    "dialect": "mssql"
+  },
+  "production": {
+    "username": "sa",
+    "password": "Pass123456",
+    "database": "master",
+    "host": "localhost",
+    "dialect": "mssql"
+  }
+}
