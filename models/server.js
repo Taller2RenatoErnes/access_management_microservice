@@ -3,8 +3,8 @@ const logger = require('morgan');
 const initialConnection = require('./database/database.js');
 const cors = require('cors');
 const Token = require("../models/database/Tokens.js");
-const {generateToken, validateJWT} = require('../middleware/jwt.js');
-const { access } = require('fs');
+const RabbitService = require('../services/rabbitService.js');
+//const {generateToken, validateJWT} = require('../middleware/jwt.js');
 
 class Server{
     constructor(){
@@ -14,17 +14,13 @@ class Server{
         this.paths = {
             access: '/api/access'
         };
+        
         this.middlewares();
         this.dBConnection();
         this.routes();
-        // this.createToken();
+        this.rabbitService();
     }
 
-    async createToken(){
-        const token = await generateToken();
-        console.log('Token: ', token);
-
-    }
 
     async dBConnection(){
         try {
@@ -42,6 +38,15 @@ class Server{
         } catch (error) {
             console.log('Error de conexión en BDD: ', error);
             throw new Error(error);
+        }
+    }
+    async rabbitService(){
+        try {
+            this.rabbitService = new RabbitService();
+            await this.rabbitService.setupRabbitMQ();
+            console.log('RabbitMQ configurado correctamente');
+        } catch (error) {
+            console.error('Error configurando RabbitMQ:', error);
         }
     }
 

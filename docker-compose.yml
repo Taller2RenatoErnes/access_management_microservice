@@ -1,4 +1,13 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - my_network
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
@@ -9,5 +18,10 @@ services:
       SA_PASSWORD: "Pass123456"
     volumes:
       - sqlserver_data:/var/opt/mssql
+
+networks:
+  my_network:
+    driver: bridge
+
 volumes:
   sqlserver_data:
