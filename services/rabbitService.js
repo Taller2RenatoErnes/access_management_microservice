@@ -1,88 +1,63 @@
 const amqp = require('amqplib');
-const tokenService = require('../services/tokensService');
-
-const handlers = {
-  verifyToken: async (data) => {
-    const { token } = data;
-    const isValid = await tokenService.isBlacklisted(token);
-    return isValid ;
-    
-  },
-};
+const {newUser, updatePassword} = require('../controllers/authController');
 
 let channel;
-
+const handlers = {
+  register: newUser,
+  password: updatePassword,
+};
 class RabbitService{
   constructor(){
-    this.queueName = 'auth_queue';
-    this.handlers = handlers;
-    this.response_queue = 'auth_response_queue';
+    this.queues = {
+      register: process.env.RABBITMQ_REGISTER_QUEUE,
+      password: process.env.RABBITMQ_PASSWORD_QUEUE,
+    };
   }
-
-
 
 
   async setupRabbitMQ(){
     try {
       const connection = await amqp.connect(process.env.RABBITMQ_URL);
       channel = await connection.createChannel();
-      await channel.assertQueue(this.response_queue, { durable: true });
-  
-
-      this.consumeResponse();
-
+      for (const queueName in this.queues) {
+        const queue = this.queues[queueName];  // Obtener el nombre de la cola
+        this.consumeResponse(queue);  // Escuchar cada cola
+      }
     } catch (error) {
       console.error('Error configurando RabbitMQ:', error);
     }
   }
 
-  async sendMessageAndWaitResponse(message){
-    return new Promise((resolve, reject) => {
-      this.consumeResponse();
-
-      console.log('Enviando mensaje:', message);
-      channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(message)), {
-      });
-      console.log('Mensaje enviado');
-    
-    });
-
-  }
  
-  consumeResponse(){
-    console.log(`Escuchando mensajes en la cola: ${this.queueName}...`);
-    return new Promise((resolve, reject) => {
-      channel.consume(
-          this.queueName,
-          async (msg) => {
-              try {
-                  const message = JSON.parse(msg.content.toString());
-                  console.log(`Mensaje recibido en la cola ${this.queueName}:`, message);
-                  const { operation, data, correlationId, replyTo } = message;
-                  if (this.handlers[operation]) {
-                      const result = await this.handlers[operation](data);
-                      console.log(`Resultado de la operación ${operation}:`, result);
-                      if (replyTo) {
-                           channel.sendToQueue(
-                               replyTo,
-                               Buffer.from(JSON.stringify({ correlationId, result })),
-                               { correlationId }
-                           );
-                          console.log(`Respuesta enviada a ${replyTo} para la operación ${operation}.`);
-                      }
-                  } else {
-                      console.error(`Operación no soportada: ${operation}`);
-                  }
+  consumeResponse(queue){
+    console.log(`Escuchando mensajes en la cola: ${queue}...`);
+    
+    channel.consume(
+        queue,
+        async (msg) => {
+            try {
+                const message = JSON.parse(msg.content.toString());
+                console.log(`Mensaje recibido en la cola ${queue}:`, message);
+                const handlerKey = Object.keys(this.queues).find(
+                  (key) => this.queues[key] === queue
+                );
+        
+                if (!handlerKey) {
+                  throw new Error(`No se encontró un handler para la cola ${queueName}`);
+                }
+        
+                const handler = handlers[handlerKey];
+                await handler(message);
+                channel.ack(msg);
 
-                  channel.ack(msg);
-              } catch (error) {
-                  console.error(`Error procesando mensaje en ${this.queueName}:`, error);
-                  reject(error);
-              }
-          },
-          { noAck: false }
-      );
-    });
+            } catch (error) {
+                console.error(`Error procesando mensaje en ${queue}:`, error);
+                
+            }
+        },
+        { noAck: false }
+    );
+    
   }
 }
 

@@ -4,16 +4,16 @@ const Token = require('../models/database/Tokens.js');
 const isBlacklisted = async (token) => {
     try {
         const isBlacklisted = await Token.findOne({ where: { token } });
-        return isBlacklisted ? true : false;
+        return isBlacklisted;
     } catch (error) {
         console.error('Error:', error);
         return false; 
     }
 };
 
-const newToken = async (user_id, token) => {
+const newToken = async (token) => {
     try {
-        const newToken = await Token.create({ user_id, token });
+        const newToken = await Token.create({ token });
         return newToken;
     } catch (error) {
         console.error('Error:', error);
