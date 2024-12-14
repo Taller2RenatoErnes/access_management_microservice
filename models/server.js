@@ -11,13 +11,10 @@ class Server{
         this.app = express();
         this.port = process.env.PORT || 4000;
         this.Server = require('http').createServer(this.app);
-        this.paths = {
-            access: '/api/access'
-        };
+        
         
         this.middlewares();
         this.dBConnection();
-        this.routes();
         this.rabbitService();
     }
 
@@ -56,10 +53,7 @@ class Server{
         this.app.use(express.json());
     }
 
-    routes(){
-        const accessRoutes = require('../routes/accessRoutes.js');
-        this.app.use(this.paths.access, accessRoutes);
-    }
+
 
     listen(){
         this.Server.listen(this.port, ()=> {
