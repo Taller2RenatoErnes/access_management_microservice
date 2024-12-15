@@ -16,10 +16,11 @@ class Server {
             access: '/api/access',
         };
         
-        this.routes();
         this.middlewares();
         this.dBConnection();
         this.rabbitService();
+        this.routes();
+
     }
 
     async dBConnection() {
@@ -59,12 +60,7 @@ class Server {
     middlewares() {
         this.app.use(logger('dev'));
         this.app.use(cors());
-        this.app.use(express.json()); // Middleware para solicitudes JSON
-        this.app.use(                //this mean we don't need to use body-parser anymore
-            express.urlencoded({
-              extended: true,
-            })
-          );  // Middleware para formularios URL-encoded
+        this.app.use(express.json());
     }
 
     listen() {

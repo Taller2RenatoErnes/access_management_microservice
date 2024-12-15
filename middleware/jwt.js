@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { User } = require('../models/database/User');
+const User = require('../models/database/User');
 
 /**
  * Obtiene el ID del usuario a partir del token JWT.
@@ -35,72 +35,66 @@ const generateToken = (id = '') => {
  * @param {Function} callback - La función de callback de gRPC.
  * @returns {Promise<void>}
  */
-const validateJWTGrpc = async (call, callback, next) => {
+const validateJWT = async (req, res, next) => {
     try {
-        const metadata = call.metadata;
-        const authorization = metadata.get('authorization')[0]; // Extraer el valor del metadato 'authorization'
+        const authorization = req.headers.authorization; // Extraer el encabezado 'Authorization'
 
         if (!authorization) {
-            return callback({
-                code: grpc.status.UNAUTHENTICATED,
-                details: 'No se ha proporcionado un token de autenticación',
+            return res.status(401).json({
+                error: 'No se ha proporcionado un token de autenticación',
             });
         }
-
         const tokenParts = authorization.split(' ');
         if (tokenParts[0] !== 'Bearer' || !tokenParts[1]) {
-            return callback({
-                code: grpc.status.UNAUTHENTICATED,
-                details: 'Formato de token inválido. Use Bearer <token>',
+            return res.status(401).json({
+                error: 'Formato de token inválido. Use Bearer <token>',
             });
         }
 
-        const token = tokenParts[1]; 
-
+        const token = tokenParts[1];
+        
+        // Verificar el token y obtener el ID del usuario
         const { id } = jwt.verify(token, process.env.SECRET);
-
+        // Buscar al usuario en la base de datos
         const user = await User.findByPk(id);
 
         if (!user) {
-            return callback({
-                code: grpc.status.UNAUTHENTICATED,
-                details: 'Token inválido, usuario no encontrado',
+            return res.status(401).json({
+                error: 'Token inválido, usuario no encontrado',
             });
         }
-
-        call.user = user;
-        next();
+        // Agregar el usuario al objeto `req` para su uso posterior
+        return res.set('Authorization', token).json({message: 'Token válido', user_id: user.dataValues.id});
     } catch (error) {
+        console.error('Error al validar el token:', error);
         if (error.name === 'TokenExpiredError') {
-            return callback({
-                code: grpc.status.UNAUTHENTICATED,
-                details: 'Token expirado',
+            return res.status(401).json({
+                error: 'Token expirado',
             });
         }
 
-        return callback({
-            code: grpc.status.UNAUTHENTICATED,
-            details: 'Token no válido',
+        return res.status(401).json({
+            error: 'Token no válido', 
         });
     }
 };
 
-const getTokenAuth = (call) => {
-    const metadata = call.metadata;
-    const authorization = metadata.get('authorization')[0];
+const getTokenAuth = (req) => {
+    const authorization = req.headers.authorization; 
+
     if (!authorization) {
-        return null;
+        return null; 
     }
 
-    const tokenParts = authorization.split(' ');
+    const tokenParts = authorization.split(' '); 
+
     if (tokenParts[0] !== 'Bearer' || !tokenParts[1]) {
-        return
+        return null; 
     }
 
-    const token = tokenParts[1];
+    const token = tokenParts[1]; 
 
-    return token;
-};
+    return token; 
 
-
-module.exports = { validateJWTGrpc, getIdJWT, generateToken, getTokenAuth};
+}
+module.exports = { validateJWT, getIdJWT, generateToken, getTokenAuth};

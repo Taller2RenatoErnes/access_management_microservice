@@ -67,13 +67,14 @@ const newUser = async (name, email, password) => {
     }
 };
 
-const updatePassword = async (email, password) => {
+const updatePassword = async (email, password,token) => {
     try {
         const user = await User.findOne({ where: { email } });
         if (!user) {
             return false;
         }
         user.password = await bcrypt.hash(password, 10);
+        await tokenService.newToken(token);
         await user.save();
         return user;
     }catch(error){
