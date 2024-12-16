@@ -46,3 +46,7 @@ npx sequelize db:seed:all
 
 npm run dev
 ```
+
+## Usuarios disponibles
+entro del proyecto, se incluyen al menos 50 usuarios preconfigurados en el archivo users.json. Los usuarios pueden autenticarse utilizando su correo electrónico (email) y su número de RUT (como contraseña). Este archivo contiene las credenciales necesarias para realizar el inicio de sesión, lo que permite probar las funcionalidades del sistema con cuentas predeterminadas.
+
